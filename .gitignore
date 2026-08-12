@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Datasets - do not commit raw data
+bhid/data/raw/
+bhid/data/processed/
+bhid/data/features/
+
+# Generated visualizations/reports
+bhid/reports/visualizations/
+
+# Model weights / generated models
+bhid/models/trained/
+bhid/models/pretrained/
+*.pt
+*.pth
+*.onnx
+*.engine
+*.safetensors
+
+# Logs
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
