@@ -1,0 +1,34 @@
+{
+  "model_name": "LightGBM Optimized",
+  "model_version": "3.1.0",
+  "training_date": "2026-08-15",
+  "target_horizon": "Y30",
+  "feature_count": 14,
+  "threshold": 0.60,
+  "metrics": {
+    "accuracy": 0.9678,
+    "precision": 0.7391,
+    "recall": 0.4304,
+    "f1": 0.5440,
+    "roc_auc": 0.8106,
+    "pr_auc": 0.5305
+  },
+  "model_path": "models/lightgbm_optimized.joblib",
+  "fallback_model_path": "models/xgboost_optimized.joblib",
+  "approved_features": [
+    "feature_pedestrian_count",
+    "feature_density_ped_per_m2",
+    "feature_occupancy_ratio",
+    "feature_mean_speed_m_s",
+    "feature_velocity_variance",
+    "feature_acceleration_m_s2",
+    "feature_directional_entropy",
+    "feature_inflow_rate_per_s",
+    "feature_outflow_rate_per_s",
+    "feature_net_flow_rate_per_s",
+    "feature_egress_deficit_ratio",
+    "feature_trajectory_convergence",
+    "feature_temporal_density_change",
+    "feature_temporal_speed_change"
+  ]
+}
