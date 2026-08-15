@@ -197,7 +197,49 @@ class RuntimeOrchestrator:
 
         return observation
 
+    def process_tracking_batch(
+        self,
+        tracking_batch: Any,
+        zone_area_m2: Optional[float] = None,
+        scene_id: Optional[str] = None,
+        zone_id: Optional[str] = None,
+        adapter: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Ingests a frame-level TrackingBatch via TrackingAdapter, updates runtime context
+        and location tracking, and returns trajectory observation statistics.
+        
+        Args:
+            tracking_batch: TrackingBatch object containing active tracks.
+            zone_area_m2: Optional spatial zone area in square meters.
+            scene_id: Optional scene identifier override.
+            zone_id: Optional zone identifier override.
+            adapter: Optional TrackingAdapter instance.
+            
+        Returns:
+            Dictionary containing adapted trajectory observation statistics.
+        """
+        from bhid.vision.tracking.tracking_adapter import TrackingAdapter
+
+        if adapter is None:
+            adapter = TrackingAdapter()
+
+        s_id = self.context.active_scene if scene_id is None else str(scene_id)
+        z_id = self.context.active_zone if zone_id is None else str(zone_id)
+
+        self.context.set_active_location(s_id, z_id)
+        self.context.update_timestamp(tracking_batch.timestamp)
+        self.context.increment_frame_count()
+
+        observation = adapter.adapt_batch(
+            batch=tracking_batch,
+            zone_area_m2=zone_area_m2
+        )
+
+        return observation
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
 
