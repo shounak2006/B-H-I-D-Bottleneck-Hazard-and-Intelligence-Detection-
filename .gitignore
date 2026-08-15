@@ -32,6 +32,11 @@ bhid/models/pretrained/
 .DS_Store
 Thumbs.db
 
+# Generated session data and release/validation reports
+bhid/data/sessions/
+bhid/reports/release/
+bhid/reports/validation/
+
 # Temporary files
 *.tmp
 *.temp

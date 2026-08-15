@@ -704,9 +704,44 @@ class RuntimeOrchestrator:
             "exported_files": {k: str(v) for k, v in exports.items() if v is not None}
         }
 
+    def initialize_bhid(self, project_root: Optional[Any] = None) -> Dict[str, Any]:
+        """
+        Executes platform pre-flight environment checks and startup initialization.
+        """
+        from bhid.release.startup_manager import StartupManager
+        if not hasattr(self, "_startup_manager"):
+            self._startup_manager = StartupManager()
+        return self._startup_manager.initialize_system(project_root=project_root)
+
+    def shutdown_bhid(
+        self,
+        persistence_manager: Optional[Any] = None,
+        session_manager: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Executes graceful platform shutdown, pending export flushes, and state cleanup.
+        """
+        from bhid.release.shutdown_manager import ShutdownManager
+        if not hasattr(self, "_shutdown_manager"):
+            self._shutdown_manager = ShutdownManager()
+        return self._shutdown_manager.shutdown_system(
+            persistence_manager=persistence_manager,
+            session_manager=session_manager
+        )
+
+    def run_release_verification(self, project_root: Optional[Any] = None) -> Dict[str, Any]:
+        """
+        Executes release packaging checks, smoke tests, and release manifest exports.
+        """
+        from bhid.release.packaging_manager import PackagingManager
+        if not hasattr(self, "_packaging_manager"):
+            self._packaging_manager = PackagingManager()
+        return self._packaging_manager.generate_release_bundle(project_root=project_root)
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
 
 
 
