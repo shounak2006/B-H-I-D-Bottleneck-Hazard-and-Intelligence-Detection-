@@ -34,6 +34,7 @@ Thumbs.db
 
 # Generated session data and release/validation reports
 bhid/data/sessions/
+bhid/data/runtime/
 bhid/reports/release/
 bhid/reports/validation/
 

@@ -25,6 +25,7 @@ class TestDocumentationCompleteness(unittest.TestCase):
         self.required_docs = {
             "INSTALLATION.md": ["Prerequisites", "Installation Steps"],
             "OPERATOR_GUIDE.md": ["System Overview", "Monitoring Workflow"],
+            "STARTUP_GUIDE.md": ["Quick Start", "Troubleshooting"],
             "ARCHITECTURE_GUIDE.md": ["Architecture", "Package Responsibilities"],
             "DEVELOPER_GUIDE.md": ["Repository", "Coding Standards"],
             "MAINTENANCE_GUIDE.md": ["Updating Dependencies", "Maintenance"],
