@@ -81,7 +81,7 @@ export const Dashboard: React.FC = () => {
             <h2 className="text-lg font-bold text-slate-100">Live Crowd Monitoring Dashboard</h2>
             <RiskBadge riskLevel={latestFrame?.risk_level || 'LOW'} probability={latestFrame?.prediction_probability} />
           </div>
-          <p className="text-xs text-slate-400 mt-1">Realtime spatiotemporal bottleneck prediction engine ($Y_{{30}}$ horizon)</p>
+          <p className="text-xs text-slate-400 mt-1">Realtime spatiotemporal bottleneck prediction engine (Y30 horizon)</p>
         </div>
 
         <button
