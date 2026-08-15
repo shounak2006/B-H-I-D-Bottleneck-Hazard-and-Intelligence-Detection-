@@ -18,8 +18,8 @@ if exist "%~dp0venv\Scripts\python.exe" (
 )
 echo.
 
-:: 2. Pre-flight Environment & Release Verification Check
-echo [STEP 1/3] Running Pre-flight Release Verification & Environment Check...
+:: 2. Pre-flight Environment and Release Verification Check
+echo [STEP 1/3] Running Pre-flight Release Verification and Environment Check...
 "%PYTHON_CMD%" -m bhid.release.launcher_manager check
 if %ERRORLEVEL% NEQ 0 (
     COLOR 0C
@@ -27,7 +27,7 @@ if %ERRORLEVEL% NEQ 0 (
     pause
     exit /b 1
 )
-echo [OK] Environment & Release Verification Passed.
+echo [OK] Environment and Release Verification Passed.
 echo.
 
 :: 3. Informational Frontend Detection Check
@@ -35,8 +35,8 @@ echo [STEP 2/3] Checking Optional Web Frontend...
 "%PYTHON_CMD%" -m bhid.release.launcher_manager frontend_check
 echo.
 
-:: 4. Launch BHID Backend Runtime Service in a Dedicated Terminal
-echo [STEP 3/3] Starting BHID Backend Service in a Dedicated Command Window...
+:: 4. Launch BHID Backend Live Monitoring Service in a Dedicated Terminal
+echo [STEP 3/3] Starting BHID Live Crowd Monitoring Pipeline in a Dedicated Window...
 start "BHID_BACKEND_SERVICE" cmd /k ""%PYTHON_CMD%" -m bhid.release.launcher_manager start"
 
 echo.

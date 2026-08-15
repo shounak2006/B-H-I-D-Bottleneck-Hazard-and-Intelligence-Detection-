@@ -15,7 +15,7 @@ if exist "%~dp0venv\Scripts\python.exe" (
 )
 
 :: 1. Call shutdown_bhid() to flush persistence buffers and close active sessions
-echo [STEP 1/2] Invoking Graceful Shutdown & Persistence Flush...
+echo [STEP 1/2] Invoking Graceful Shutdown and Persistence Flush...
 "%PYTHON_CMD%" -m bhid.release.launcher_manager stop
 
 :: 2. Close titled BHID Backend Service Command Window safely

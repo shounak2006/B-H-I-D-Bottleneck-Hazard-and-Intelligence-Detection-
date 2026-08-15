@@ -4,7 +4,7 @@ Unit tests for BHID LauncherManager (Windows One-Click Launcher).
 Validates:
 1. Informational frontend auto-detection
 2. Dynamic environment launch readiness validation
-3. Backend process startup & PID file management under bhid/data/runtime/
+3. Backend live crowd monitoring loop startup & PID file management under bhid/data/runtime/
 4. Graceful backend process shutdown
 """
 
@@ -19,7 +19,7 @@ PARENT_ROOT = PROJECT_ROOT.parent
 if str(PARENT_ROOT) not in sys.path:
     sys.path.insert(0, str(PARENT_ROOT))
 if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PARENT_ROOT))
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from bhid.release import LauncherConfig, LauncherManager
 
@@ -46,13 +46,11 @@ class TestLauncherManager(unittest.TestCase):
         self.assertTrue(res["launch_ready"])
         self.assertTrue(res["model_artifact_ready"])
 
-    def test_start_and_stop_backend(self):
-        start_res = self.mgr.start_backend()
-        self.assertEqual(start_res["status"], "RUNNING")
-        self.assertTrue(self.config.pid_file.exists())
-
-        stop_res = self.mgr.stop_backend()
-        self.assertEqual(stop_res["status"], "SHUTDOWN_COMPLETE")
+    def test_start_and_stop_backend_live_loop(self):
+        # Run 3 frames of live monitoring without rendering OpenCV GUI window
+        start_res = self.mgr.start_backend(max_frames=3, show_window=False)
+        self.assertEqual(start_res["status"], "STOPPED")
+        self.assertEqual(start_res["processed_frames"], 3)
         self.assertFalse(self.config.pid_file.exists())
 
 
