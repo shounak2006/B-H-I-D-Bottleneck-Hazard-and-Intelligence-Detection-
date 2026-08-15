@@ -173,11 +173,17 @@ pause
 
         with open(start_bat_path, "w", encoding="utf-8") as f:
             f.write(bat_content)
+        
+        # Also create start.bat shortcut
+        start_alias = root / "start.bat"
+        with open(start_alias, "w", encoding="utf-8") as f:
+            f.write(bat_content)
+
         return start_bat_path
 
     def generate_stop_script(self, project_root: Optional[Path] = None) -> Path:
         """
-        Generates `stop_bhid.bat` in the project root directory.
+        Generates `stop_bhid.bat` and `stop.bat` in the project root directory.
         Safe shutdown: Calls shutdown_bhid() and closes titled backend and frontend windows.
         """
         root = Path(project_root) if project_root else self.config.resolve_project_root()
@@ -218,6 +224,12 @@ pause
 
         with open(stop_bat_path, "w", encoding="utf-8") as f:
             f.write(bat_content)
+
+        # Also create stop.bat shortcut
+        stop_alias = root / "stop.bat"
+        with open(stop_alias, "w", encoding="utf-8") as f:
+            f.write(bat_content)
+
         return stop_bat_path
 
     def start_backend(self, max_frames: Optional[int] = None, show_window: bool = True) -> Dict[str, Any]:
