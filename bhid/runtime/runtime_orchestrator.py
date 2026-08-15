@@ -153,6 +153,51 @@ class RuntimeOrchestrator:
 
         return results
 
+    def process_detection_batch(
+        self,
+        detection_batch: Any,
+        zone_area_m2: Optional[float] = None,
+        scene_id: Optional[str] = None,
+        zone_id: Optional[str] = None,
+        confidence_threshold: float = 0.50,
+        adapter: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Ingests a frame-level DetectionBatch via DetectionAdapter, updates runtime context
+        and location tracking, and returns detection observation statistics.
+        
+        Args:
+            detection_batch: DetectionBatch object containing frame detections.
+            zone_area_m2: Optional spatial zone area in square meters.
+            scene_id: Optional scene identifier override.
+            zone_id: Optional zone identifier override.
+            confidence_threshold: Minimum detection confidence score.
+            adapter: Optional DetectionAdapter instance.
+            
+        Returns:
+            Dictionary containing adapted frame-level detection statistics.
+        """
+        from bhid.vision.detection.detection_adapter import DetectionAdapter
+
+        if adapter is None:
+            adapter = DetectionAdapter()
+
+        s_id = self.context.active_scene if scene_id is None else str(scene_id)
+        z_id = self.context.active_zone if zone_id is None else str(zone_id)
+
+        self.context.set_active_location(s_id, z_id)
+        self.context.update_timestamp(detection_batch.timestamp)
+        self.context.increment_frame_count()
+
+        observation = adapter.adapt_batch(
+            batch=detection_batch,
+            zone_area_m2=zone_area_m2,
+            confidence_threshold=confidence_threshold
+        )
+
+        return observation
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
