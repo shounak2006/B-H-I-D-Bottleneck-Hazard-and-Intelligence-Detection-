@@ -101,7 +101,7 @@ class LauncherManager:
     def generate_start_script(self, project_root: Optional[Path] = None) -> Path:
         """
         Generates `start_bhid.bat` in the project root directory.
-        Fixes CMD parsing errors by using caret escaping (^&) or plain text.
+        Launches FastAPI Backend (Port 8000) and React/Vite Frontend (Port 5173).
         """
         root = Path(project_root) if project_root else self.config.resolve_project_root()
         start_bat_path, _ = self.config.get_bat_paths(root)
@@ -127,7 +127,7 @@ if exist "%~dp0venv\\Scripts\\python.exe" (
 echo.
 
 :: 2. Pre-flight Environment and Release Verification Check
-echo [STEP 1/3] Running Pre-flight Release Verification and Environment Check...
+echo [STEP 1/4] Running Pre-flight Release Verification and Environment Check...
 "%PYTHON_CMD%" -m bhid.release.launcher_manager check
 if %ERRORLEVEL% NEQ 0 (
     COLOR 0C
@@ -139,21 +139,35 @@ echo [OK] Environment and Release Verification Passed.
 echo.
 
 :: 3. Informational Frontend Detection Check
-echo [STEP 2/3] Checking Optional Web Frontend...
+echo [STEP 2/4] Verifying Frontend Application...
 "%PYTHON_CMD%" -m bhid.release.launcher_manager frontend_check
 echo.
 
-:: 4. Launch BHID Backend Live Monitoring Service in a Dedicated Terminal
-echo [STEP 3/3] Starting BHID Live Crowd Monitoring Pipeline in a Dedicated Window...
-start "{self.config.backend_process_title}" cmd /k ""%PYTHON_CMD%" -m bhid.release.launcher_manager start"
+:: 4. Launch BHID FastAPI Dedicated Backend Service (Port 8000)
+echo [STEP 3/4] Starting BHID FastAPI Backend Service on http://localhost:8000...
+start "{self.config.backend_process_title}" cmd /k ""%PYTHON_CMD%" -m uvicorn backend.main:app --host 127.0.0.1 --port 8000"
+
+:: 5. Launch BHID React/Vite Dedicated Frontend (Port 5173)
+echo [STEP 4/4] Starting BHID React/Vite Frontend Dashboard on http://localhost:5173...
+if exist "%~dp0frontend\\node_modules" (
+    start "BHID_FRONTEND_SERVICE" cmd /k "cd /d "%~dp0frontend" && npm run dev"
+) else (
+    echo [INFO] First-time setup: Installing frontend npm dependencies...
+    start "BHID_FRONTEND_SERVICE" cmd /k "cd /d "%~dp0frontend" && npm install && npm run dev"
+)
 
 echo.
 echo ====================================================================
 echo    BHID Platform Successfully Launched!
-echo    - Process Window Title: {self.config.backend_process_title}
+echo    - Backend API:  http://localhost:8000 (Swagger: http://localhost:8000/docs)
+echo    - Frontend Dashboard: http://localhost:5173
 echo    - To stop the system safely, run stop_bhid.bat
 echo ====================================================================
 echo.
+
+:: Automatically open default browser
+timeout /t 3 >nul
+start http://localhost:5173
 pause
 """
 
@@ -164,7 +178,7 @@ pause
     def generate_stop_script(self, project_root: Optional[Path] = None) -> Path:
         """
         Generates `stop_bhid.bat` in the project root directory.
-        Safe shutdown: Calls shutdown_bhid() and closes titled windows without killing unrelated python processes.
+        Safe shutdown: Calls shutdown_bhid() and closes titled backend and frontend windows.
         """
         root = Path(project_root) if project_root else self.config.resolve_project_root()
         _, stop_bat_path = self.config.get_bat_paths(root)
@@ -189,9 +203,10 @@ if exist "%~dp0venv\\Scripts\\python.exe" (
 echo [STEP 1/2] Invoking Graceful Shutdown and Persistence Flush...
 "%PYTHON_CMD%" -m bhid.release.launcher_manager stop
 
-:: 2. Close titled BHID Backend Service Command Window safely
+:: 2. Close titled BHID Backend Service and Frontend Service Command Windows safely
 echo [STEP 2/2] Safely closing dedicated BHID terminal windows...
 taskkill /FI "WINDOWTITLE eq {self.config.backend_process_title}*" /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq BHID_FRONTEND_SERVICE*" /F >nul 2>&1
 
 echo.
 echo ====================================================================

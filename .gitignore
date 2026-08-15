@@ -38,6 +38,11 @@ bhid/data/runtime/
 bhid/reports/release/
 bhid/reports/validation/
 
+# Node.js / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
 # Temporary files
 *.tmp
 *.temp
