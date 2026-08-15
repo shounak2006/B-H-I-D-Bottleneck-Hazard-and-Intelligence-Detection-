@@ -616,9 +616,44 @@ class RuntimeOrchestrator:
             "replayed_frames": rendered_frames
         }
 
+    def generate_operational_report(
+        self,
+        session_id: str,
+        reporting_manager: Optional[Any] = None,
+        storage_root: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Generates structured operational reports and multi-format exports for a historical session.
+        
+        Args:
+            session_id: Target recording session identifier string.
+            reporting_manager: Optional ReportingManager instance.
+            storage_root: Optional storage root directory path.
+            
+        Returns:
+            Dictionary containing session_report dict and exported file paths.
+        """
+        from bhid.reporting.reporting_manager import ReportingManager
+
+        if reporting_manager is None:
+            if not hasattr(self, "_reporting_manager"):
+                self._reporting_manager = ReportingManager()
+            reporting_manager = self._reporting_manager
+
+        session_report = reporting_manager.generate_report(session_id=session_id, storage_root=storage_root, export=True)
+        exports = reporting_manager.export_all(session_report)
+
+        return {
+            "session_id": session_id,
+            "session_report": session_report.to_dict(),
+            "markdown_content": session_report.to_markdown(),
+            "exported_files": {k: str(v) for k, v in exports.items() if v is not None}
+        }
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
 
 
 
