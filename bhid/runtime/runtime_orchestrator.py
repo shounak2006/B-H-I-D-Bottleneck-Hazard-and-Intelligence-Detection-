@@ -446,9 +446,130 @@ class RuntimeOrchestrator:
             "active_event_count": len(active_events)
         }
 
+    def process_persistent_monitoring_frame(
+        self,
+        tracking_batch: Any,
+        frame: Optional[Any] = None,
+        persistence_manager: Optional[Any] = None,
+        monitoring_controller: Optional[Any] = None,
+        event_engine: Optional[Any] = None,
+        analytics_engine: Optional[Any] = None,
+        zone_area_m2: float = 100.0,
+        scene_id: Optional[str] = None,
+        zone_id: Optional[str] = None,
+        draw_heatmap: bool = True,
+        draw_trajectories: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Executes complete end-to-end BHID operational pipeline with non-blocking persistence:
+        TrackingBatch -> Analytics -> Prediction -> Event Engine -> Monitoring Snapshot -> Visualization -> Persistence Manager.
+        
+        Args:
+            tracking_batch: Input TrackingBatch object.
+            frame: Optional input OpenCV BGR image array.
+            persistence_manager: Optional PersistenceManager instance.
+            monitoring_controller: Optional MonitoringController instance.
+            event_engine: Optional HazardEventEngine instance.
+            analytics_engine: Optional CrowdAnalyticsEngine instance.
+            zone_area_m2: Spatial zone area in m^2.
+            scene_id: Optional scene ID override.
+            zone_id: Optional zone ID override.
+            draw_heatmap: Whether to overlay density heatmap.
+            draw_trajectories: Whether to render trajectory motion trails.
+            
+        Returns:
+            Dictionary containing prediction_result, monitoring_snapshot, rendered_frame, active_events, persistence_active.
+        """
+        from bhid.events.event_engine import HazardEventEngine
+        from bhid.analytics.crowd_analytics_engine import CrowdAnalyticsEngine
+        from bhid.visualization.monitoring_controller import MonitoringController
+        from bhid.persistence.persistence_manager import PersistenceManager
+
+        if event_engine is None:
+            if not hasattr(self, "_event_engine"):
+                self._event_engine = HazardEventEngine()
+            event_engine = self._event_engine
+
+        if analytics_engine is None:
+            if not hasattr(self, "_analytics_engine"):
+                self._analytics_engine = CrowdAnalyticsEngine(default_zone_area_m2=zone_area_m2)
+            analytics_engine = self._analytics_engine
+
+        if monitoring_controller is None:
+            if not hasattr(self, "_monitoring_controller"):
+                self._monitoring_controller = MonitoringController()
+            monitoring_controller = self._monitoring_controller
+
+        if persistence_manager is None:
+            if not hasattr(self, "_persistence_manager"):
+                self._persistence_manager = PersistenceManager()
+            persistence_manager = self._persistence_manager
+
+        s_id = self.context.active_scene if scene_id is None else str(scene_id)
+        z_id = self.context.active_zone if zone_id is None else str(zone_id)
+
+        # 1. Compute analytics snapshot
+        analytics_snapshot = analytics_engine.process_tracking_batch(
+            tracking_batch=tracking_batch,
+            zone_area_m2=zone_area_m2,
+            scene_id=s_id,
+            zone_id=z_id
+        )
+
+        # 2. Run prediction pipeline
+        features = analytics_snapshot.export_feature_vector()
+        pred_result = self.process_snapshot(
+            features=features,
+            timestamp=tracking_batch.timestamp,
+            scene_id=s_id,
+            zone_id=z_id,
+            metadata={"frame_id": tracking_batch.frame_id}
+        )
+        setattr(pred_result, "frame_id", tracking_batch.frame_id)
+
+        # 3. Process prediction in event engine
+        hazard_event = event_engine.process_prediction(pred_result)
+        active_events = event_engine.get_active_events()
+
+        # 4. Generate monitoring snapshot
+        monitoring_snapshot = monitoring_controller.generate_snapshot(
+            tracking_batch=tracking_batch,
+            analytics_snapshot=analytics_snapshot,
+            prediction_result=pred_result,
+            active_events=active_events
+        )
+
+        # 5. Render annotated OpenCV visual frame
+        rendered_frame = monitoring_controller.render_frame(
+            frame=frame,
+            tracking_batch=tracking_batch,
+            analytics_snapshot=analytics_snapshot,
+            prediction_result=pred_result,
+            active_events=active_events,
+            draw_heatmap=draw_heatmap,
+            draw_trajectories=draw_trajectories
+        )
+
+        # 6. Non-blocking persistence ingestion
+        persistence_manager.persist_prediction(pred_result)
+        persistence_manager.persist_analytics_snapshot(analytics_snapshot)
+        if hazard_event is not None:
+            persistence_manager.persist_event(hazard_event)
+        persistence_manager.persist_monitoring_snapshot(monitoring_snapshot)
+
+        return {
+            "prediction_result": pred_result.to_dict(),
+            "hazard_event": hazard_event.to_dict() if hazard_event is not None else None,
+            "monitoring_snapshot": monitoring_snapshot.to_dict(),
+            "rendered_frame": rendered_frame,
+            "active_event_count": len(active_events),
+            "persistence_active": True
+        }
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
 
 
 
