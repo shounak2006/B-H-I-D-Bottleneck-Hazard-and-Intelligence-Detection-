@@ -24,6 +24,25 @@ export const apiClient = {
     return res.data;
   },
 
+  uploadVideo: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axios.post(`${API_BASE}/monitoring/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+
+  startAnalysis: async (sessionId: string) => {
+    const res = await axios.post(`${API_BASE}/monitoring/analyze/${sessionId}`);
+    return res.data;
+  },
+
+  getAnalysisProgress: async (sessionId: string) => {
+    const res = await axios.get(`${API_BASE}/monitoring/progress/${sessionId}`);
+    return res.data;
+  },
+
   getActiveEvents: async (): Promise<HazardEvent[]> => {
     const res = await axios.get(`${API_BASE}/events/active`);
     return res.data.active_events || [];

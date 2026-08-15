@@ -32,11 +32,12 @@ bhid/models/pretrained/
 .DS_Store
 Thumbs.db
 
-# Generated session data and release/validation reports
+# Generated session data, uploads, and release/validation reports
 bhid/data/sessions/
+bhid/data/uploads/
+bhid/data/test_uploads/
 bhid/data/runtime/
-bhid/reports/release/
-bhid/reports/validation/
+bhid/reports/
 
 # Node.js / Frontend
 node_modules/
