@@ -566,9 +566,60 @@ class RuntimeOrchestrator:
             "persistence_active": True
         }
 
+    def replay_historical_session(
+        self,
+        session_id: str,
+        storage_root: Optional[Any] = None,
+        playback_engine: Optional[Any] = None,
+        monitoring_controller: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Replays a historical recording session deterministically without model re-inference.
+        
+        Args:
+            session_id: Target session identifier to replay.
+            storage_root: Optional storage root directory path.
+            playback_engine: Optional PlaybackEngine instance.
+            monitoring_controller: Optional MonitoringController instance.
+            
+        Returns:
+            Dictionary containing session_metadata, total_frames, replay_summary, replayed_frames.
+        """
+        from bhid.replay.playback_engine import PlaybackEngine
+        from bhid.visualization.monitoring_controller import MonitoringController
+
+        if playback_engine is None:
+            playback_engine = PlaybackEngine(session_id=session_id, storage_root=storage_root)
+        else:
+            playback_engine.load_session(session_id=session_id, storage_root=storage_root)
+
+        if monitoring_controller is None:
+            if not hasattr(self, "_monitoring_controller"):
+                self._monitoring_controller = MonitoringController()
+            monitoring_controller = self._monitoring_controller
+
+        frames = playback_engine.replay_all()
+        summary = playback_engine.export_summary()
+
+        rendered_frames = []
+        for r_frame in frames:
+            r_img = monitoring_controller.render_replay_frame(r_frame)
+            rendered_frames.append({
+                "replay_frame": r_frame.to_dict(),
+                "rendered_image": r_img
+            })
+
+        return {
+            "session_id": session_id,
+            "total_frames": len(frames),
+            "replay_summary": summary,
+            "replayed_frames": rendered_frames
+        }
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
 
 
 
