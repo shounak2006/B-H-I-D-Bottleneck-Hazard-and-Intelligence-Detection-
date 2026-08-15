@@ -293,9 +293,60 @@ class RuntimeOrchestrator:
 
         return result
 
+    def process_prediction_event(
+        self,
+        tracking_batch: Any,
+        event_engine: Optional[Any] = None,
+        analytics_engine: Optional[Any] = None,
+        zone_area_m2: float = 100.0,
+        scene_id: Optional[str] = None,
+        zone_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Executes complete end-to-end BHID operational intelligence pipeline:
+        TrackingBatch -> CrowdAnalyticsEngine -> FeatureWindowManager -> BottleneckPredictor -> RuntimePredictionResult -> HazardEventEngine -> HazardEvent.
+        
+        Args:
+            tracking_batch: Input TrackingBatch object.
+            event_engine: Optional HazardEventEngine instance.
+            analytics_engine: Optional CrowdAnalyticsEngine instance.
+            zone_area_m2: Spatial zone area in m^2.
+            scene_id: Optional scene ID override.
+            zone_id: Optional zone ID override.
+            
+        Returns:
+            Dictionary containing prediction result and affected HazardEvent (if any).
+        """
+        from bhid.events.event_engine import HazardEventEngine
+
+        if event_engine is None:
+            if not hasattr(self, "_event_engine"):
+                self._event_engine = HazardEventEngine()
+            event_engine = self._event_engine
+
+        # 1. Execute analytics & prediction engine pipeline
+        pred_result = self.process_tracking_batch_with_analytics(
+            tracking_batch=tracking_batch,
+            analytics_engine=analytics_engine,
+            zone_area_m2=zone_area_m2,
+            scene_id=scene_id,
+            zone_id=zone_id
+        )
+
+        # 2. Ingest RuntimePredictionResult into HazardEventEngine
+        hazard_event = event_engine.process_prediction(pred_result)
+
+        return {
+            "prediction_result": pred_result.to_dict(),
+            "hazard_event": hazard_event.to_dict() if hazard_event is not None else None,
+            "active_event_count": len(event_engine.get_active_events()),
+            "pipeline_context": self.context.to_dict()
+        }
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
 
 
 
