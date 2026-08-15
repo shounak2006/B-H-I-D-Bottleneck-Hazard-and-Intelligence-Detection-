@@ -24,12 +24,16 @@ class TrackingBatch:
         frame_id: Any,
         timestamp: float,
         active_tracks: Optional[List[TrackedObject]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        image_width: float = 1920.0,
+        image_height: float = 1080.0
     ):
         self.frame_id = frame_id
         self.timestamp = float(timestamp)
         self.active_tracks: List[TrackedObject] = active_tracks if active_tracks is not None else []
         self.metadata: Dict[str, Any] = metadata or {}
+        self.image_width = float(image_width) if image_width is not None else 1920.0
+        self.image_height = float(image_height) if image_height is not None else 1080.0
 
     def active_count(self) -> int:
         """Returns count of active pedestrian tracks in the batch."""

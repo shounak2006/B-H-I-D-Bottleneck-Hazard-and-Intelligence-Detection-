@@ -77,6 +77,26 @@ class TrackedObject:
         """Estimates current velocity (vx, vy) from trajectory history."""
         return self.trajectory_history.get_average_velocity()
 
+    @property
+    def bbox(self) -> Tuple[float, float, float, float]:
+        """Property alias for current_bbox."""
+        return self.current_bbox
+
+    @property
+    def centroid(self) -> Tuple[float, float]:
+        """Property alias for get_center()."""
+        return self.get_center()
+
+    @property
+    def trajectory(self) -> Trajectory:
+        """Property alias for trajectory_history."""
+        return self.trajectory_history
+
+    @property
+    def velocity(self) -> Tuple[float, float]:
+        """Property alias for get_velocity_estimate()."""
+        return self.get_velocity_estimate()
+
     def to_dict(self) -> Dict[str, Any]:
         """Returns JSON-serializable dictionary representation of tracked object."""
         vx, vy = self.get_velocity_estimate()
@@ -92,3 +112,4 @@ class TrackedObject:
             "velocity": [round(vx, 4), round(vy, 4)],
             "trajectory_points": len(self.trajectory_history.points)
         }
+

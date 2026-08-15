@@ -116,6 +116,11 @@ class CentroidTracker(BasePedestrianTracker):
         det_centroids = [((b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0) for b in det_bboxes]
         det_confidences = [d.confidence for d in det_list]
 
+        w_val = getattr(detection_batch, "image_width", 1920.0)
+        h_val = getattr(detection_batch, "image_height", 1080.0)
+        w_val = 1920.0 if w_val is None else float(w_val)
+        h_val = 1080.0 if h_val is None else float(h_val)
+
         # 3. Case: If no active tracks currently exist
         if not self.tracks:
             for i in range(len(det_list)):
@@ -128,7 +133,9 @@ class CentroidTracker(BasePedestrianTracker):
             return TrackingBatch(
                 frame_id=frame_id,
                 timestamp=timestamp,
-                active_tracks=list(self.tracks.values())
+                active_tracks=list(self.tracks.values()),
+                image_width=w_val,
+                image_height=h_val
             )
 
         # 4. Case: Active tracks exist -> Compute Euclidean distance matrix
@@ -190,5 +197,7 @@ class CentroidTracker(BasePedestrianTracker):
         return TrackingBatch(
             frame_id=frame_id,
             timestamp=timestamp,
-            active_tracks=list(self.tracks.values())
+            active_tracks=list(self.tracks.values()),
+            image_width=w_val,
+            image_height=h_val
         )

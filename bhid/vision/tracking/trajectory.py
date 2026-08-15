@@ -109,6 +109,10 @@ class Trajectory:
         recent = self.points[-n:] if len(self.points) >= n else self.points
         return [(pt.x, pt.y) for pt in recent]
 
+    def get_recent_points(self, n_points: int = 15) -> List[TrajectoryPoint]:
+        """Returns list of recent TrajectoryPoint objects up to n_points."""
+        return self.points[-n_points:] if len(self.points) >= n_points else list(self.points)
+
     def to_dict(self) -> Dict[str, Any]:
         """Returns JSON-serializable dictionary representation of trajectory."""
         vx, vy = self.get_average_velocity()
