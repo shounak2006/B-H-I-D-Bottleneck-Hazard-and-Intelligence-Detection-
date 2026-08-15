@@ -650,9 +650,64 @@ class RuntimeOrchestrator:
             "exported_files": {k: str(v) for k, v in exports.items() if v is not None}
         }
 
+    def run_system_validation(
+        self,
+        session_id: str,
+        storage_root: Optional[Any] = None,
+        validation_manager: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Executes read-only system validation and readiness assessment on a historical session.
+        
+        Args:
+            session_id: Target session identifier to validate.
+            storage_root: Optional storage root directory path.
+            validation_manager: Optional ValidationManager instance.
+            
+        Returns:
+            Dictionary containing system evaluation results.
+        """
+        from bhid.validation.validation_manager import ValidationManager
+
+        if validation_manager is None:
+            if not hasattr(self, "_validation_manager"):
+                self._validation_manager = ValidationManager()
+            validation_manager = self._validation_manager
+
+        return validation_manager.run_all_validations(session_id=session_id, storage_root=storage_root)
+
+    def generate_validation_report(
+        self,
+        session_id: str,
+        storage_root: Optional[Any] = None,
+        validation_manager: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Executes system validation and exports validation_report.json and validation_report.md.
+        
+        Args:
+            session_id: Target session identifier to validate.
+            storage_root: Optional storage root directory path.
+            validation_manager: Optional ValidationManager instance.
+            
+        Returns:
+            Dictionary containing evaluation result and exported report paths.
+        """
+        eval_res = self.run_system_validation(session_id=session_id, storage_root=storage_root, validation_manager=validation_manager)
+        
+        from bhid.validation.validation_manager import ValidationManager
+        vm = validation_manager or getattr(self, "_validation_manager", ValidationManager())
+        exports = vm.export_validation_report(eval_res)
+
+        return {
+            "evaluation": eval_res,
+            "exported_files": {k: str(v) for k, v in exports.items() if v is not None}
+        }
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
 
 
 
