@@ -238,8 +238,64 @@ class RuntimeOrchestrator:
 
         return observation
 
+    def process_tracking_batch_with_analytics(
+        self,
+        tracking_batch: Any,
+        analytics_engine: Optional[Any] = None,
+        zone_area_m2: float = 100.0,
+        scene_id: Optional[str] = None,
+        zone_id: Optional[str] = None
+    ) -> RuntimePredictionResult:
+        """
+        Ingests a TrackingBatch, runs CrowdAnalyticsEngine to compute the 14 spatiotemporal features,
+        updates FeatureWindowManager, executes Phase 3D BottleneckPredictor, updates PipelineContext,
+        and returns RuntimePredictionResult.
+        
+        Args:
+            tracking_batch: Input TrackingBatch object.
+            analytics_engine: Optional CrowdAnalyticsEngine instance.
+            zone_area_m2: Spatial zone area in m^2.
+            scene_id: Optional scene ID override.
+            zone_id: Optional zone ID override.
+            
+        Returns:
+            RuntimePredictionResult encapsulating bottleneck risk assessment.
+        """
+        from bhid.analytics.crowd_analytics_engine import CrowdAnalyticsEngine
+
+        if analytics_engine is None:
+            if not hasattr(self, "_analytics_engine"):
+                self._analytics_engine = CrowdAnalyticsEngine(default_zone_area_m2=zone_area_m2)
+            analytics_engine = self._analytics_engine
+
+        s_id = self.context.active_scene if scene_id is None else str(scene_id)
+        z_id = self.context.active_zone if zone_id is None else str(zone_id)
+
+        # 1. Process TrackingBatch through CrowdAnalyticsEngine to generate 14-feature snapshot
+        snapshot = analytics_engine.process_tracking_batch(
+            tracking_batch=tracking_batch,
+            zone_area_m2=zone_area_m2,
+            scene_id=s_id,
+            zone_id=z_id
+        )
+
+        # 2. Extract canonical 14 feature dictionary
+        features = snapshot.export_feature_vector()
+
+        # 3. Process 14-feature snapshot through orchestrator pipeline
+        result = self.process_snapshot(
+            features=features,
+            timestamp=tracking_batch.timestamp,
+            scene_id=s_id,
+            zone_id=z_id,
+            metadata={"frame_id": tracking_batch.frame_id, "analytics_processed": True}
+        )
+
+        return result
+
     def get_context(self) -> PipelineContext:
         """Returns the active runtime pipeline context."""
         return self.context
+
 
 
